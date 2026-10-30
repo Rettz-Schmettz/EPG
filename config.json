@@ -1,0 +1,41 @@
+{
+  "_comment": "Источники идут по приоритету: канал берёт программу из первого, где она для него нашлась.",
+  "channels": "channels.tsv",
+  "aliases": "aliases.json",
+  "exclude_groups": [
+    "XXX Adult"
+  ],
+  "past_days": 7,
+  "future_days": 8,
+  "keep_desc": true,
+  "name_rewrites": [
+    [
+      "^MiniMax\\s+",
+      "MM "
+    ]
+  ],
+  "sources": [
+    {
+      "name": "BCU Media",
+      "url": "https://bcumedia.pro/epg.xml.gz",
+      "only": "^BCU"
+    },
+    {
+      "name": "MiniMax",
+      "url": "http://epg.minimax-tv.ru/minimax_epg.xml.gz",
+      "only": "^(MiniMax|MS) "
+    },
+    {
+      "name": "iptvx.one",
+      "url": "https://iptvx.one/epg/epg.xml.gz"
+    },
+    {
+      "name": "teleguide.info",
+      "url": "http://www.teleguide.info/download/new3/xmltv.xml.gz"
+    },
+    {
+      "name": "Sharavoz",
+      "url": "http://iptv-content.rv77.pw/guide.xml"
+    }
+  ]
+}
