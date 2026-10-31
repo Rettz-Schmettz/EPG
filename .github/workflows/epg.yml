@@ -27,7 +27,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Refresh channel list from playlist (if PLAYLIST_URL secret is set)
+        env:
+          PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
+        run: |
+          if [ -z "$PLAYLIST_URL" ]; then echo "PLAYLIST_URL не задан — беру channels.tsv из репозитория"; exit 0; fi
+          mkdir -p "$RUNNER_TEMP/pl"
+          if curl -fsSL --retry 3 --max-time 120 -A "UniPlayer" -o "$RUNNER_TEMP/pl/playlist.m3u" "$PLAYLIST_URL" \
+             && head -c 7 "$RUNNER_TEMP/pl/playlist.m3u" | grep -q "#EXTM3U"; then
+            python extract_channels.py "$RUNNER_TEMP/pl/playlist.m3u" "$RUNNER_TEMP/pl/channels.tsv"
+            cp "$RUNNER_TEMP/pl/channels.tsv" channels.tsv
+            echo "Список каналов обновлён из плейлиста"
+          else
+            echo "::warning::Плейлист не скачался — беру channels.tsv из репозитория"
+          fi
+          rm -f "$RUNNER_TEMP/pl/playlist.m3u"
       - name: Build epg.xml.gz
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python build_epg.py --config config.json --out public
       - name: Summary
         if: always()

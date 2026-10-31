@@ -104,6 +104,54 @@ def open_xml(path: str):
     return open(path, "rb")
 
 
+def _get_json(url):
+    req = urllib.request.Request(url, headers={"User-Agent": UA,
+                                               "Accept": "application/vnd.github+json"})
+    tok = os.environ.get("GITHUB_TOKEN")
+    if tok and "api.github.com" in url:
+        req.add_header("Authorization", f"Bearer {tok}")
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.load(r)
+
+
+def _key(s):
+    return re.sub(r"[\s_\-]+", "", s.lower())
+
+
+def expand_sources(sources, log):
+    """Раскрывает {"github_dir": "owner/repo", "folders": [...]} в список файлов-источников."""
+    out = []
+    for src in sources:
+        if "github_dir" not in src:
+            out.append(src)
+            continue
+        repo = src["github_dir"]
+        try:
+            root = _get_json(f"https://api.github.com/repos/{repo}/contents")
+        except Exception as e:  # noqa: BLE001
+            log(f"Источник {src['name']}: не удалось получить список папок: {e}")
+            continue
+        dirs = {_key(d["name"]): d["name"] for d in root if d.get("type") == "dir"}
+        for folder in src.get("folders", []):
+            real = dirs.get(_key(folder))
+            if not real:
+                log(f"Источник {src['name']}: папки «{folder}» нет")
+                continue
+            try:
+                files = _get_json(f"https://api.github.com/repos/{repo}/contents/{real}")
+            except Exception as e:  # noqa: BLE001
+                log(f"Источник {src['name']}/{real}: {e}")
+                continue
+            for f in files:
+                n = f.get("name", "")
+                if f.get("type") == "file" and re.search(r"\.xml(\.gz|\.xz)?$", n, re.I):
+                    item = {k: v for k, v in src.items() if k not in ("github_dir", "folders")}
+                    item["name"] = f"{src['name']} {real}/{n}"
+                    item["url"] = f["download_url"]
+                    out.append(item)
+    return out
+
+
 # ---------------------------------------------------------------- время
 
 def parse_time(s: str):
@@ -334,7 +382,7 @@ def main():
         print(msg, flush=True)
         log_lines.append(msg)
 
-    for src in cfg["sources"]:
+    for src in expand_sources(cfg["sources"], log):
         if src.get("enabled", True) is False:
             continue
         log(f"Источник: {src['name']}  ({src['url']})")
