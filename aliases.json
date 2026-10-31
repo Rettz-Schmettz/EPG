@@ -1,5 +1,19 @@
 {
   "_comment": "Ручные соответствия: «название в плейлисте»: «название в источнике», «id:<id в источнике>» или «-» (не подставлять программу). Можно списком.",
   "_example": "\"Матч! HD\": \"Матч ТВ\"",
-  "Kino TV": "-"
+  "Kino TV": "-",
+  "GL Naked and Funny [Голые и cмешные]": "id:goldline-naked",
+  "Clarity4k Русский Сериал": "id:clarity4k-ruserialy",
+  "Oasis Superheroes Series HD": "id:oasis-superheroseries",
+  "Oasis USA Сериалы HD": "id:oasis-usaseries",
+  "LIBERTY КОРОТКОМЕТРАЖКИ FHD": "id:liberty-korotkometr",
+  "МУЗ": "id:muztv",
+  "Music Box Russian": "MusicBox Russia HD",
+  "ТНТ International": "id:tnt-int-cis",
+  "360° HD": "id:360-podmoskovie",
+  "360°": "id:360-podmoskovie",
+  "Сов. Секретно": "id:sovsek",
+  "Курай TV": "id:kuraj",
+  "Хузур": "id:xuzur-tv",
+  "M-1 Global TV": "id:m1global"
 }

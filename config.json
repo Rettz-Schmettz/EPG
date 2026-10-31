@@ -10,16 +10,20 @@
   "keep_desc": true,
   "name_rewrites": [
     [
+      "^MiniMax\\s+(.+?)\\s*U\\.S\\.S\\.R\\.?$",
+      "MM USSR \\1"
+    ],
+    [
       "^MiniMax\\s+",
       "MM "
     ],
     [
-      "\\s*U\\.S\\.S\\.R\\.?",
-      "  СССР"
-    ],
-    [
       "(\\d)0e\\b",
       "\\g<1>0-е"
+    ],
+    [
+      "\\s*\\[[^\\]]*[а-яА-ЯёЁ][^\\]]*\\]",
+      ""
     ]
   ],
   "sources": [
@@ -36,6 +40,10 @@
     {
       "name": "iptvx.one",
       "url": "https://iptvx.one/epg/epg.xml.gz"
+    },
+    {
+      "name": "BCU Media (все каналы)",
+      "url": "https://bcumedia.pro/epg.xml.gz"
     },
     {
       "name": "teleguide.info",

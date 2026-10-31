@@ -55,6 +55,17 @@ def loose(name: str) -> str:
     return " ".join(t for t in norm(name).split() if t not in QUALITY)
 
 
+_HOMO = str.maketrans("aceopxykmtbh", "асеорхукмтвн")
+
+
+def compact(name: str) -> str:
+    """Самый мягкий ключ: как loose, но без пробелов и с латиницей-двойниками → кириллица."""
+    return loose(name).replace(" ", "").translate(_HOMO)
+
+
+COUNTRY = {"IS": "IL", "BL": "BY"}
+
+
 def split_shift(name: str):
     """«Первый канал (+4)» → («Первый канал», 4)."""
     m = SHIFT_RE.search(name)
@@ -147,18 +158,27 @@ def build_targets(rows, aliases, rewrites):
                 else:
                     keys.append(("strict", norm(a)))
                     keys.append(("loose", loose(a)))
+                    keys.append(("compact", compact(a)))
         if keys and keys[0][0] == "none":
             targets[name] = {"group": group, "shift": shift, "keys": []}
             continue
         candidates = [base]
+        cur = base
         for pattern, repl in rewrites:
-            alt = re.sub(pattern, repl, base, flags=re.I)
-            if alt != base:
+            alt = re.sub(pattern, repl, cur, flags=re.I).strip()
+            if alt != cur:
                 candidates.append(alt)
+                cur = alt
+        m = re.match(r"([A-Z]{2})\s", group)
+        if m and m.group(1) != "RU" and not re.search(r"\[[A-Za-z]{2,6}\]", base):
+            code = COUNTRY.get(m.group(1), m.group(1))
+            candidates += [f"{c} [{code}]" for c in list(candidates)]
         for c in candidates:
             keys.append(("strict", norm(c)))
         for c in candidates:
             keys.append(("loose", loose(c)))
+        for c in candidates:
+            keys.append(("compact", compact(c)))
         # без дублей, порядок важен: сначала точнее
         seen, uniq = set(), []
         for k in keys:
@@ -191,7 +211,7 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
     # id канала в источнике -> [(канал плейлиста, сдвиг)]
     route = defaultdict(list)
     # индексы источника
-    by_id, by_strict, by_loose = {}, {}, {}
+    by_id, by_strict, by_loose, by_compact = {}, {}, {}, {}
     chan_names = {}
     all_names = []
     resolved = False
@@ -203,7 +223,8 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
         for name in wanted:
             t = targets[name]
             for kind, key in t["keys"]:
-                idx = {"id": by_id, "strict": by_strict, "loose": by_loose}[kind]
+                idx = {"id": by_id, "strict": by_strict, "loose": by_loose,
+                       "compact": by_compact}[kind]
                 cid = idx.get(key)
                 if cid:
                     route[cid].append((name, t["shift"]))
@@ -228,6 +249,7 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
                     for n in names + [cid]:
                         by_strict.setdefault(norm(n), cid)
                         by_loose.setdefault(loose(n), cid)
+                        by_compact.setdefault(compact(n), cid)
                 root.clear()
             elif el.tag == "programme":
                 if not resolved:
