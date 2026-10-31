@@ -139,11 +139,17 @@ def build_targets(rows, aliases, rewrites):
         keys = []
         if alias:
             for a in (alias if isinstance(alias, list) else [alias]):
+                if a == "-":
+                    keys = [("none", "")]
+                    break
                 if a.startswith("id:"):
                     keys.append(("id", a[3:]))
                 else:
                     keys.append(("strict", norm(a)))
                     keys.append(("loose", loose(a)))
+        if keys and keys[0][0] == "none":
+            targets[name] = {"group": group, "shift": shift, "keys": []}
+            continue
         candidates = [base]
         for pattern, repl in rewrites:
             alt = re.sub(pattern, repl, base, flags=re.I)
@@ -165,7 +171,7 @@ def build_targets(rows, aliases, rewrites):
 
 # ---------------------------------------------------------------- обработка источника
 
-def process_source(src, targets, pending, window, keep_desc, tmp_dir, log):
+def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_dir=None):
     """Читает один источник, пишет программы найденных каналов во временный файл.
 
     pending — множество каналов плейлиста, которым программа ещё не найдена.
@@ -187,6 +193,7 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log):
     # индексы источника
     by_id, by_strict, by_loose = {}, {}, {}
     chan_names = {}
+    all_names = []
     resolved = False
     lo, hi = window
 
@@ -217,6 +224,7 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log):
                     by_id.setdefault(cid, cid)
                     names = [d.text for d in el.findall("display-name") if d.text]
                     chan_names[cid] = names[0] if names else cid
+                    all_names.append((cid, names))
                     for n in names + [cid]:
                         by_strict.setdefault(norm(n), cid)
                         by_loose.setdefault(loose(n), cid)
@@ -247,6 +255,11 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log):
     if not resolved:  # источник без передач
         resolve()
     shutil.rmtree(work, ignore_errors=True)
+    if dump_dir:
+        slug = re.sub(r"[^\w.-]+", "_", src["name"])
+        with open(os.path.join(dump_dir, f"{slug}.tsv"), "w", encoding="utf-8") as f:
+            for cid, names in all_names:
+                f.write(cid + "\t" + " | ".join(names) + "\n")
     return out_path, dict(counts), matched_name
 
 
@@ -280,6 +293,8 @@ def main():
     keep_desc = cfg.get("keep_desc", True)
 
     os.makedirs(args.out, exist_ok=True)
+    dump_dir = os.path.join(args.out, "sources")
+    os.makedirs(dump_dir, exist_ok=True)
     tmp_dir = tempfile.mkdtemp()
     pending = set(targets)
     filled = {}       # канал -> (источник, исходное имя, число передач)
@@ -296,7 +311,7 @@ def main():
         log(f"Источник: {src['name']}  ({src['url']})")
         try:
             part, counts, mnames = process_source(src, targets, pending, window,
-                                                  keep_desc, tmp_dir, log)
+                                                  keep_desc, tmp_dir, log, dump_dir)
         except Exception as e:  # noqa: BLE001
             log(f"  ОШИБКА: {e}")
             continue
