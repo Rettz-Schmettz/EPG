@@ -15,5 +15,22 @@
   "Сов. Секретно": "id:sovsek",
   "Курай TV": "id:kuraj",
   "Хузур": "id:xuzur-tv",
-  "M-1 Global TV": "id:m1global"
+  "M-1 Global TV": "id:m1global",
+  "TNT Sports 1 [UK]": "id:bt-sport1",
+  "TNT Sports 2 [UK]": "id:bt-sport2",
+  "TNT Sports 3 [UK]": "id:bt-sport3",
+  "TNT Sports 4 [UK]": "id:bt-sport4",
+  "TNT Sports 1 HD [UK]": "id:bt-sport1",
+  "TNT Sports 2 HD [UK]": "id:bt-sport2",
+  "TNT Sports 3 HD [UK]": "id:bt-sport3",
+  "TNT Sports 4 HD [UK]": "id:bt-sport4",
+  "TNT Sports Ultimate UHD [UK]": "id:bt-sport-4k",
+  "Sky Sports Premiere League HD [UK]": "id:sky-sports-apl",
+  "Sky Sports Premiere League [UK]": "id:sky-sports-apl",
+  "Sky Sports Action HD [UK]": "id:sky-sports-action",
+  "Sky News Live HD [UK]": "id:sky-news-uk",
+  "LFC TV HD [UK]": "id:lfc-uk",
+  "Espn 1 Hd [US]": "id:espn-us",
+  "Fox Sport 1 Hd [US]": "FS1 HD",
+  "NHL Network USA [US]": "id:nhl-network-us"
 }

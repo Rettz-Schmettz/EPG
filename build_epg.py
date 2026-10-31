@@ -64,6 +64,7 @@ def compact(name: str) -> str:
 
 
 COUNTRY = {"IS": "IL", "BL": "BY"}
+LAST = {}  # канал -> время окончания последней передачи
 
 
 def split_shift(name: str):
@@ -207,6 +208,7 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
 
     out_path = os.path.join(tmp_dir, f"prog_{len(os.listdir(tmp_dir))}.xml")
     counts = defaultdict(int)
+    last = {}
     matched_name = {}
     # id канала в источнике -> [(канал плейлиста, сдвиг)]
     route = defaultdict(list)
@@ -273,6 +275,9 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
                             out.write(ET.tostring(el, encoding="unicode"))
                             out.write("\n")
                             counts[name] += 1
+                            end = (stop or start) + delta
+                            if name not in last or end > last[name]:
+                                last[name] = end
                 root.clear()
     if not resolved:  # источник без передач
         resolve()
@@ -282,6 +287,8 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
         with open(os.path.join(dump_dir, f"{slug}.tsv"), "w", encoding="utf-8") as f:
             for cid, names in all_names:
                 f.write(cid + "\t" + " | ".join(names) + "\n")
+    for n, t in last.items():
+        LAST[n] = t
     return out_path, dict(counts), matched_name
 
 
@@ -393,12 +400,19 @@ def main():
         if miss:
             rep.append(f"**{g}**: " + "; ".join(miss))
             rep.append("")
-    rep += ["## Откуда что взято", "", "| Канал | Источник | Имя в источнике | Передач |",
-            "|---|---|---|---|"]
+    stale = [n for n in filled if n in LAST and LAST[n] < now + dt.timedelta(hours=12)]
+    if stale:
+        rep += ["## Программа заканчивается в ближайшие 12 часов или уже кончилась", "",
+                "; ".join(stale), ""]
+    msk = dt.timezone(dt.timedelta(hours=3))
+    rep += ["## Откуда что взято", "",
+            "| Канал | Источник | Имя в источнике | Передач | Программа до (МСК) |",
+            "|---|---|---|---|---|"]
     for name in targets:
         if name in filled:
             s, m, c = filled[name]
-            rep.append(f"| {name} | {s} | {m} | {c} |")
+            until = LAST[name].astimezone(msk).strftime("%d.%m %H:%M") if name in LAST else ""
+            rep.append(f"| {name} | {s} | {m} | {c} | {until} |")
     rep += ["", "## Лог", "", "```"] + log_lines + ["```", ""]
     with open(os.path.join(args.out, "report.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(rep))
