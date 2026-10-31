@@ -70,21 +70,6 @@
       "url": "https://epgshare01.online/epgshare01/epg_ripper_PL1.xml.gz"
     },
     {
-      "name": "globetvapp",
-      "github_dir": "globetvapp/epg",
-      "folders": [
-        "Germany",
-        "United Kingdom",
-        "Israel",
-        "Lithuania",
-        "Latvia",
-        "Estonia",
-        "Romania",
-        "Turkey",
-        "Ukraine"
-      ]
-    },
-    {
       "name": "Sharavoz",
       "url": "http://iptv-content.rv77.pw/guide.xml"
     }
