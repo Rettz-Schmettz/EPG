@@ -70,10 +70,6 @@
       "url": "https://epgshare01.online/epgshare01/epg_ripper_PL1.xml.gz"
     },
     {
-      "name": "epgshare01 IE1",
-      "url": "https://epgshare01.online/epgshare01/epg_ripper_IE1.xml.gz"
-    },
-    {
       "name": "globetvapp",
       "github_dir": "globetvapp/epg",
       "folders": [
@@ -83,13 +79,8 @@
         "Lithuania",
         "Latvia",
         "Estonia",
-        "Azerbaijan",
-        "Armenia",
-        "Kazakhstan",
-        "Moldova",
         "Romania",
         "Turkey",
-        "Belarus",
         "Ukraine"
       ]
     },

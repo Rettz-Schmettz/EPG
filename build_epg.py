@@ -142,8 +142,11 @@ def expand_sources(sources, log):
             except Exception as e:  # noqa: BLE001
                 log(f"Источник {src['name']}/{real}: {e}")
                 continue
+            names = {f.get("name", "") for f in files}
             for f in files:
                 n = f.get("name", "")
+                if n.endswith(".xml") and n + ".gz" in names:
+                    continue
                 if f.get("type") == "file" and re.search(r"\.xml(\.gz|\.xz)?$", n, re.I):
                     item = {k: v for k, v in src.items() if k not in ("github_dir", "folders")}
                     item["name"] = f"{src['name']} {real}/{n}"
@@ -257,6 +260,7 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
     out_path = os.path.join(tmp_dir, f"prog_{len(os.listdir(tmp_dir))}.xml")
     counts = defaultdict(int)
     last = {}
+    skipped, newest = [0], [None]
     matched_name = {}
     # id канала в источнике -> [(канал плейлиста, сдвиг)]
     route = defaultdict(list)
@@ -309,6 +313,10 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
                 if dests:
                     start = parse_time(el.get("start", ""))
                     stop = parse_time(el.get("stop", "")) if el.get("stop") else None
+                    if start and not ((stop or start) >= lo and start <= hi):
+                        skipped[0] += 1
+                        if newest[0] is None or start > newest[0]:
+                            newest[0] = start
                     if start and (stop or start) >= lo and start <= hi:
                         if not keep_desc:
                             for d in el.findall("desc"):
@@ -329,6 +337,8 @@ def process_source(src, targets, pending, window, keep_desc, tmp_dir, log, dump_
                 root.clear()
     if not resolved:  # источник без передач
         resolve()
+    if skipped[0] and not counts:
+        log(f"  все {skipped[0]} передач вне окна дат (самая поздняя: {newest[0]}) — источник устарел")
     shutil.rmtree(work, ignore_errors=True)
     if dump_dir:
         slug = re.sub(r"[^\w.-]+", "_", src["name"])
