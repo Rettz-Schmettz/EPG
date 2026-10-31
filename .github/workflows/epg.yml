@@ -31,15 +31,16 @@ jobs:
         env:
           PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
         run: |
-          if [ -z "$PLAYLIST_URL" ]; then echo "PLAYLIST_URL не задан — беру channels.tsv из репозитория"; exit 0; fi
-          mkdir -p "$RUNNER_TEMP/pl"
-          if curl -fsSL --retry 3 --max-time 120 -A "UniPlayer" -o "$RUNNER_TEMP/pl/playlist.m3u" "$PLAYLIST_URL" \
-             && head -c 7 "$RUNNER_TEMP/pl/playlist.m3u" | grep -q "#EXTM3U"; then
+          mkdir -p public "$RUNNER_TEMP/pl"
+          if [ -z "$PLAYLIST_URL" ]; then echo "PLAYLIST_URL не задан — список из репозитория" | tee public/playlist_status.txt; exit 0; fi
+          code=$(curl -sSL --retry 3 --max-time 120 -A "UniPlayer" -o "$RUNNER_TEMP/pl/playlist.m3u" -w '%{http_code}' "$PLAYLIST_URL" 2>/dev/null || echo "нет соединения")
+          if [ "$code" = "200" ] && head -c 7 "$RUNNER_TEMP/pl/playlist.m3u" | grep -q "#EXTM3U"; then
             python extract_channels.py "$RUNNER_TEMP/pl/playlist.m3u" "$RUNNER_TEMP/pl/channels.tsv"
             cp "$RUNNER_TEMP/pl/channels.tsv" channels.tsv
-            echo "Список каналов обновлён из плейлиста"
+            echo "OK: список каналов обновлён из плейлиста, каналов: $(grep -vc '^#' channels.tsv) ($(date -u +%F' '%H:%M) UTC)" | tee public/playlist_status.txt
           else
-            echo "::warning::Плейлист не скачался — беру channels.tsv из репозитория"
+            echo "::warning::Плейлист не скачался (HTTP $code) — беру channels.tsv из репозитория"
+            echo "ОШИБКА: плейлист не скачался, HTTP-код: $code, размер ответа: $(stat -c %s "$RUNNER_TEMP/pl/playlist.m3u" 2>/dev/null || echo 0) байт ($(date -u +%F' '%H:%M) UTC)" | tee public/playlist_status.txt
           fi
           rm -f "$RUNNER_TEMP/pl/playlist.m3u"
       - name: Build epg.xml.gz
@@ -57,7 +58,7 @@ jobs:
           git init -q -b report
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add report.md sources
+          git add report.md sources playlist_status.txt
           git commit -q -m "report $(date -u +%F_%H%M)"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" report
           rm -rf .git
