@@ -14,8 +14,8 @@
 2. Загрузите в него все файлы этой папки (включая скрытую `.github/`).
 3. Settings → Pages → Build and deployment → Source: **GitHub Actions**.
 4. Actions → **Build EPG** → Run workflow. Первая сборка идёт несколько минут.
-5. Ссылка на файл: `https://<ваш-логин>.github.io/epg/epg.xml.gz`,
-   отчёт: `https://<ваш-логин>.github.io/epg/report.md`.
+5. Ссылка на файл: `https://rettz-schmettz.github.io/EPG/epg.xml.gz`,
+   отчёт: `https://rettz-schmettz.github.io/EPG/report.md` (и ветка `report`).
 6. В UniPlayer в контекстном меню плейлиста подключите внешний источник EPG:
    вставьте ссылку на `epg.xml.gz`.
 
